@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Рулетка решений</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background: #0a0a0f;
+      color: #e8e8f0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    #app { width: 100%; max-width: 480px; }
+
+    .wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .wheel-box {
+      position: relative;
+      width: 320px;
+      height: 320px;
+    }
+
+    #wheel {
+      width: 100%;
+      height: 100%;
+    }
+
+    .pointer {
+      position: absolute;
+      top: -12px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 0;
+      height: 0;
+      border-left: 14px solid transparent;
+      border-right: 14px solid transparent;
+      border-top: 22px solid #ff2d55;
+      filter: drop-shadow(0 0 6px #ff2d55) drop-shadow(0 0 12px #ff2d55);
+      z-index: 10;
+    }
+
+    .hub {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 48px;
+      height: 48px;
+      background: #1a1a2e;
+      border: 2px solid #2a2a4a;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 500;
+      color: #a0a0c0;
+      z-index: 5;
+      box-shadow: inset 0 0 8px rgba(0,0,0,0.5);
+    }
+
+    .controls {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .btn {
+      padding: 12px 28px;
+      border: none;
+      border-radius: 8px;
+      font-size: 15px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-family: inherit;
+      letter-spacing: 0.5px;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .btn-spin {
+      background: #000000;
+      color: #ffffff;
+      border: 1px solid rgba(255,255,255,0.15);
+    }
+
+    .btn-spin:hover {
+      background: #1a1a1a;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+    }
+
+    .btn-spin:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    .btn-sec {
+      background: rgba(255,255,255,0.06);
+      color: #e8e8f0;
+      border: 1px solid rgba(255,255,255,0.12);
+    }
+
+    .btn-sec:hover {
+      background: rgba(255,255,255,0.12);
+    }
+
+    .btn-donate {
+      width: 100%;
+      margin-top: 12px;
+      background: rgba(255, 145, 0, 0.12);
+      color: #ff9100;
+      border: 1px solid rgba(255, 145, 0, 0.35);
+      font-size: 14px;
+      padding: 10px 20px;
+    }
+
+    .btn-donate:hover {
+      background: rgba(255, 145, 0, 0.22);
+      box-shadow: 0 0 16px rgba(255, 145, 0, 0.25);
+    }
+
+    .panel {
+      width: 100%;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 12px;
+      padding: 16px;
+    }
+
+    .panel-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .panel-title {
+      font-size: 14px;
+      font-weight: 500;
+      color: #a0a0c0;
+    }
+
+    .count {
+      font-size: 12px;
+      color: #a0a0c0;
+    }
+
+    .row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px;
+      border-radius: 8px;
+      transition: background 0.15s;
+    }
+
+    .row:hover {
+      background: rgba(255,255,255,0.04);
+    }
+
+    .dot {
+      width: 16px;
+      height: 16px;
+      border-radius: 4px;
+      flex-shrink: 0;
+      box-shadow: 0 0 6px currentColor;
+    }
+
+    .inp {
+      flex: 1;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 6px;
+      padding: 7px 10px;
+      color: #e8e8f0;
+      font-size: 14px;
+      font-family: inherit;
+      outline: none;
+    }
+
+    .inp:focus {
+      border-color: rgba(255,255,255,0.25);
+    }
+
+    .acts {
+      display: flex;
+      gap: 6px;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+
+    .row:hover .acts {
+      opacity: 1;
+    }
+
+    .xbtn {
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      border: none;
+      background: rgba(255,255,255,0.08);
+      color: #a0a0c0;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      line-height: 1;
+      padding: 0;
+    }
+
+    .xbtn:hover {
+      background: rgba(255,45,85,0.2);
+      color: #ff2d55;
+    }
+
+    .addrow {
+      display: flex;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .addinp {
+      flex: 1;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 6px;
+      padding: 8px 12px;
+      color: #e8e8f0;
+      font-size: 14px;
+      font-family: inherit;
+      outline: none;
+    }
+
+    .addinp:focus {
+      border-color: rgba(255,255,255,0.25);
+    }
+
+    .modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.8);
+      backdrop-filter: blur(6px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+    }
+
+    .modal.on {
+      display: flex;
+    }
+
+    .modal-box {
+      background: #12121e;
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 16px;
+      padding: 48px 56px;
+      text-align: center;
+      max-width: 90vw;
+      animation: pop 0.35s cubic-bezier(0.34,1.56,0.64,1);
+      box-shadow: 0 0 60px rgba(0,0,0,0.6);
+    }
+
+    .modal-label {
+      font-size: 14px;
+      color: #a0a0c0;
+      margin-bottom: 16px;
+      text-transform: lowercase;
+      letter-spacing: 1px;
+    }
+
+    .modal-res {
+      font-size: 48px;
+      font-weight: 500;
+      color: #fff;
+      line-height: 1.2;
+      margin-bottom: 28px;
+      word-break: break-word;
+    }
+
+    .modal-close {
+      padding: 12px 36px;
+      background: #000;
+      color: #fff;
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 8px;
+      font-size: 15px;
+      font-weight: 500;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.2s;
+    }
+
+    .modal-close:hover {
+      background: #1a1a1a;
+    }
+
+    @keyframes pop {
+      from { transform: scale(0.8); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+  </style>
+</head>
+<body>
+
+<div id="app">
+  <div class="wrapper">
+    <div class="wheel-box">
+      <svg id="wheel" viewBox="0 0 320 320" style="width:100%;height:100%;"></svg>
+      <div class="pointer"></div>
+      <div class="hub">рулетка</div>
+    </div>
+
+    <div class="controls">
+      <button id="spinBtn" class="btn btn-spin">КРУТИТЬ КОЛЕСО</button>
+      <button id="resetBtn" class="btn btn-sec">сбросить</button>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head">
+        <span class="panel-title">сектора</span>
+        <span id="count" class="count">0</span>
+      </div>
+      <div id="list"></div>
+      <div class="addrow">
+        <input id="newInp" class="addinp" placeholder="название сектора" maxlength="30">
+        <button id="addBtn" class="btn btn-sec" style="padding:8px 16px;">добавить</button>
+      </div>
+      <a href="https://www.donationalerts.com/r/true_foxes108" target="_blank" rel="noopener noreferrer" class="btn btn-donate">ОТПРАВИТЬ ПОДДЕРЖКУ</a>
+    </div>
+  </div>
+</div>
+
+<div id="modal" class="modal">
+  <div class="modal-box">
+    <div class="modal-label">выпал сектор</div>
+    <div id="resText" class="modal-res"></div>
+    <button id="closeBtn" class="modal-close">закрыть</button>
+  </div>
+</div>
+
+<script>
+(function(){
+  const wheel = document.getElementById('wheel');
+  const spinBtn = document.getElementById('spinBtn');
+  const resetBtn = document.getElementById('resetBtn');
+  const list = document.getElementById('list');
+  const newInp = document.getElementById('newInp');
+  const addBtn = document.getElementById('addBtn');
+  const countEl = document.getElementById('count');
+  const modal = document.getElementById('modal');
+  const resText = document.getElementById('resText');
+  const closeBtn = document.getElementById('closeBtn');
+
+  const colors = [
+    '#ff2d55','#00e5ff','#76ff03','#ffea00','#e040fb',
+    '#ff9100','#18ffff','#ff4081','#b2ff59','#ffd740',
+    '#f50057','#00b0ff','#69f0ae','#ffab40','#ea80fc'
+  ];
+
+  let sectors = [
+    {name:'да', color:'#00e5ff'},
+    {name:'нет', color:'#ff2d55'},
+    {name:'подумаю', color:'#76ff03'},
+    {name:'завтра', color:'#ffea00'},
+    {name:'рискни', color:'#e040fb'},
+    {name:'переспроси', color:'#ff9100'}
+  ];
+
+  let rot = 0, spinning = false;
+
+  function svgEl(tag, attrs) {
+    const el = document.createElementNS('http://www.w3.org/2000/svg', tag);
+    for (const k in attrs) el.setAttribute(k, attrs[k]);
+    return el;
+  }
+
+  function draw() {
+    wheel.innerHTML = '';
+    const n = sectors.length;
+    if (n === 0) {
+      wheel.appendChild(svgEl('circle', {cx:160, cy:160, r:150, fill:'none', stroke:'rgba(255,255,255,0.1)', 'stroke-width':2}));
+      const t = svgEl('text', {x:160, y:165, 'text-anchor':'middle', fill:'#a0a0c0', 'font-size':14});
+      t.textContent = 'добавьте сектора';
+      wheel.appendChild(t);
+      return;
+    }
+    const a = 360 / n;
+    for (let i = 0; i < n; i++) {
+      const sa = i * a - 90;
+      const ea = (i + 1) * a - 90;
+      const rs = (sa * Math.PI) / 180;
+      const re = (ea * Math.PI) / 180;
+      const x1 = 160 + 150 * Math.cos(rs);
+      const y1 = 160 + 150 * Math.sin(rs);
+      const x2 = 160 + 150 * Math.cos(re);
+      const y2 = 160 + 150 * Math.sin(re);
+      const d = `M 160 160 L ${x1} ${y1} A 150 150 0 0 1 ${x2} ${y2} Z`;
+      const c = sectors[i].color;
+
+      const p = svgEl('path', {
+        d: d, fill: c, 'fill-opacity': '0.12', stroke: c, 'stroke-width': 2,
+        style: `filter: drop-shadow(0 0 4px ${c}) drop-shadow(0 0 10px ${c});`
+      });
+      wheel.appendChild(p);
+
+      const ta = sa + a / 2;
+      const tr = (ta * Math.PI) / 180;
+      const tx = 160 + 95 * Math.cos(tr);
+      const ty = 160 + 95 * Math.sin(tr);
+      const fs = Math.max(10, Math.min(14, 120 / (n * 1.5)));
+      const rotAng = (ta > 90 && ta < 270) ? ta + 180 : ta;
+
+      const txt = svgEl('text', {
+        x: tx, y: ty, 'text-anchor': 'middle', 'dominant-baseline': 'middle',
+        fill: c, 'font-size': fs, 'font-weight': 500,
+        transform: `rotate(${rotAng}, ${tx}, ${ty})`,
+        style: `text-shadow: 0 0 6px ${c};`
+      });
+      txt.textContent = sectors[i].name;
+      wheel.appendChild(txt);
+    }
+  }
+
+  function renderList() {
+    list.innerHTML = '';
+    sectors.forEach((s, i) => {
+      const row = document.createElement('div');
+      row.className = 'row';
+      row.innerHTML = `
+        <div class="dot" style="background:${s.color};color:${s.color};"></div>
+        <input class="inp" value="${s.name}" data-i="${i}">
+        <div class="acts"><button class="xbtn" data-d="${i}">&times;</button></div>
+      `;
+      list.appendChild(row);
+    });
+    countEl.textContent = sectors.length;
+    list.querySelectorAll('.inp').forEach(inp => {
+      inp.onchange = function() {
+        sectors[+this.dataset.i].name = this.value.trim() || 'без названия';
+        draw();
+      };
+    });
+    list.querySelectorAll('[data-d]').forEach(btn => {
+      btn.onclick = function() {
+        sectors.splice(+this.dataset.d, 1);
+        draw();
+        renderList();
+      };
+    });
+  }
+
+  function add() {
+    const name = newInp.value.trim();
+    if (!name) return;
+    sectors.push({name, color: colors[sectors.length % colors.length]});
+    newInp.value = '';
+    draw();
+    renderList();
+  }
+
+  function doSpin() {
+    if (spinning || sectors.length === 0) return;
+    spinning = true;
+    spinBtn.disabled = true;
+    spinBtn.textContent = 'вращается...';
+
+    const win = Math.floor(Math.random() * sectors.length);
+    const n = sectors.length;
+    const a = 360 / n;
+    const extra = 5 + Math.floor(Math.random() * 3);
+
+    const targetAngle = (360 - (win * a + a / 2)) % 360;
+    const currentMod = ((rot % 360) + 360) % 360;
+    let delta = (targetAngle - currentMod + 360) % 360;
+    if (delta < 10) delta += 360;
+
+    const final = rot + extra * 360 + delta;
+    const dur = 4000;
+    const start = performance.now();
+    const startRot = rot;
+
+    function ease(t) { return 1 - Math.pow(1 - t, 3); }
+
+    function frame(now) {
+      const p = Math.min((now - start) / dur, 1);
+      rot = startRot + (final - startRot) * ease(p);
+      wheel.style.transform = `rotate(${rot}deg)`;
+      if (p < 1) {
+        requestAnimationFrame(frame);
+      } else {
+        spinning = false;
+        spinBtn.disabled = false;
+        spinBtn.textContent = 'КРУТИТЬ КОЛЕСО';
+        showWin(sectors[win]);
+      }
+    }
+    requestAnimationFrame(frame);
+  }
+
+  function showWin(s) {
+    resText.textContent = s.name;
+    resText.style.color = s.color;
+    resText.style.textShadow = `0 0 30px ${s.color}, 0 0 60px ${s.color}`;
+    modal.classList.add('on');
+  }
+
+  function hideModal() { modal.classList.remove('on'); }
+
+  function reset() {
+    if (spinning) return;
+    rot = 0;
+    wheel.style.transform = 'rotate(0deg)';
+  }
+
+  spinBtn.onclick = doSpin;
+  resetBtn.onclick = reset;
+  addBtn.onclick = add;
+  newInp.onkeydown = e => { if (e.key === 'Enter') add(); };
+  closeBtn.onclick = hideModal;
+  modal.onclick = e => { if (e.target === modal) hideModal(); };
+
+  draw();
+  renderList();
+})();
+</script>
+
+</body>
+</html>
